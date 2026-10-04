@@ -1,0 +1,352 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "9381aae4-ed52-42da-bb33-bbe89b8d339e",
+  "prevId": "6e282143-0c59-413d-b064-cca71679330c",
+  "tables": {
+    "builtin_chart": {
+      "name": "builtin_chart",
+      "columns": {
+        "chart_id": {
+          "name": "chart_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plain_sha256": {
+          "name": "plain_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plain_bytes": {
+          "name": "plain_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "iv": {
+          "name": "iv",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cipher_bytes": {
+          "name": "cipher_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chunk_count": {
+          "name": "chunk_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cipher_sha256": {
+          "name": "cipher_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "builtin_version": {
+          "name": "builtin_version",
+          "value": "\"builtin_chart\".\"version\"=1"
+        },
+        "builtin_iv": {
+          "name": "builtin_iv",
+          "value": "length(\"builtin_chart\".\"iv\")=12"
+        },
+        "builtin_size": {
+          "name": "builtin_size",
+          "value": "\"builtin_chart\".\"plain_bytes\">0 AND \"builtin_chart\".\"plain_bytes\"<=141703 AND \"builtin_chart\".\"cipher_bytes\"=\"builtin_chart\".\"plain_bytes\"+16 AND \"builtin_chart\".\"chunk_count\" BETWEEN 1 AND 3"
+        },
+        "builtin_hashes": {
+          "name": "builtin_hashes",
+          "value": "length(\"builtin_chart\".\"plain_sha256\")=64 AND length(\"builtin_chart\".\"cipher_sha256\")=64"
+        }
+      }
+    },
+    "builtin_chart_chunk": {
+      "name": "builtin_chart_chunk",
+      "columns": {
+        "chart_id": {
+          "name": "chart_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chunk_index": {
+          "name": "chunk_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "builtin_chart_chunk_chart_id_builtin_chart_chart_id_fk": {
+          "name": "builtin_chart_chunk_chart_id_builtin_chart_chart_id_fk",
+          "tableFrom": "builtin_chart_chunk",
+          "tableTo": "builtin_chart",
+          "columnsFrom": [
+            "chart_id"
+          ],
+          "columnsTo": [
+            "chart_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "builtin_chart_chunk_chart_id_chunk_index_pk": {
+          "columns": [
+            "chart_id",
+            "chunk_index"
+          ],
+          "name": "builtin_chart_chunk_chart_id_chunk_index_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "builtin_chunk_index": {
+          "name": "builtin_chunk_index",
+          "value": "\"builtin_chart_chunk\".\"chunk_index\" BETWEEN 0 AND 2"
+        },
+        "builtin_chunk_size": {
+          "name": "builtin_chunk_size",
+          "value": "length(\"builtin_chart_chunk\".\"payload\") BETWEEN 1 AND 65536"
+        }
+      }
+    },
+    "private_spc": {
+      "name": "private_spc",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_uid": {
+          "name": "owner_uid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chart_id": {
+          "name": "chart_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payload_hash": {
+          "name": "payload_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_bytes": {
+          "name": "total_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "note_count": {
+          "name": "note_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "aggregate_json": {
+          "name": "aggregate_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "private_spc_owner_hash": {
+          "name": "private_spc_owner_hash",
+          "columns": [
+            "owner_uid",
+            "payload_hash"
+          ],
+          "isUnique": true
+        },
+        "private_spc_owner_created": {
+          "name": "private_spc_owner_created",
+          "columns": [
+            "owner_uid",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "private_spc_chunk": {
+      "name": "private_spc_chunk",
+      "columns": {
+        "chart_id": {
+          "name": "chart_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chunk_index": {
+          "name": "chunk_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payload": {
+          "name": "payload",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "private_spc_chunk_chart_id_private_spc_id_fk": {
+          "name": "private_spc_chunk_chart_id_private_spc_id_fk",
+          "tableFrom": "private_spc_chunk",
+          "tableTo": "private_spc",
+          "columnsFrom": [
+            "chart_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "private_spc_chunk_chart_id_chunk_index_pk": {
+          "columns": [
+            "chart_id",
+            "chunk_index"
+          ],
+          "name": "private_spc_chunk_chart_id_chunk_index_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "private_spc_rate": {
+      "name": "private_spc_rate",
+      "columns": {
+        "owner_uid": {
+          "name": "owner_uid",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "writes": {
+          "name": "writes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "private_spc_rate_updated": {
+          "name": "private_spc_rate_updated",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

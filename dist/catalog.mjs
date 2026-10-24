@@ -17,7 +17,15 @@ export function validateCatalog(doc) {
   if (!obj(doc)) fail("shape");
   if (doc.format !== FORMAT || doc.buildId !== BUILD) fail("build");
   if (!obj(doc.source) || Object.keys(SOURCE).some((k) => doc.source[k] !== SOURCE[k])) fail("source");
-  if (!Array.isArray(doc.songs) || doc.songs.length !== 78 || !Array.isArray(doc.packs) || doc.packs.length !== 7) fail("counts");
+  const dlc = doc.dlcSource !== undefined;
+  if (dlc && (!obj(doc.dlcSource) || Object.keys(doc.dlcSource).sort().join(',') !== 'metadataSha256,packId' || doc.dlcSource.packId !== 8 || doc.dlcSource.metadataSha256 !== '050a098bf0e0c286864f7454900d7b8ae599906d5dedb893e42f8985a024a4c5')) fail("dlc-source");
+  const extra = dlc ? 20 : 0;
+  if (!Array.isArray(doc.songs) || doc.songs.length !== 78 + extra/4 || !Array.isArray(doc.packs) || doc.packs.length !== (dlc ? 8 : 7)) fail("counts");
+  if (dlc) {
+    const expected = new Map([[77,'disruptorarray'],[78,'kuukansouzou'],[79,'megameteor'],[80,'technopolis'],[81,'yumenohajimari']]);
+    const added = doc.songs.filter(s => expected.has(s.songId));
+    if (added.length !== 5 || new Set(added.map(s=>s.songId)).size !== 5 || added.some(s=>s.basename!==expected.get(s.songId)||s.packIds?.join(',')!=='8'||s.charts?.map(c=>c.chartId).join(',')!==[0,1,2,3].map(n=>s.basename+n).join(',')||s.charts.some(c=>!c.available||(doc.spcSchema!==undefined&&c.spc?.status!=='ok'))) || doc.songs.some(s=>!expected.has(s.songId)&&s.packIds?.includes(8)) || doc.packs.find(p=>p.packId===8)?.slug!=='dlc-chunithm-0') fail("dlc-coverage");
+  }
   const songs = new Map();
   const basenames = new Set();
   const packIds = new Set();
@@ -27,7 +35,7 @@ export function validateCatalog(doc) {
     packIds.add(pack.packId);
     packSlugs.add(pack.slug);
   }
-  if ([...packIds].sort((a, b) => a - b).join(",") !== "1,2,3,4,5,6,7") fail("pack-ids");
+  if ([...packIds].sort((a, b) => a - b).join(",") !== (dlc ? "1,2,3,4,5,6,7,8" : "1,2,3,4,5,6,7")) fail("pack-ids");
   const chartIds = new Set();
   let available = 0;
   let jacketBytes = 0;
@@ -43,7 +51,7 @@ export function validateCatalog(doc) {
     for (const chart of song.charts) {
       if (!obj(chart) || typeof chart.chartId !== "string" || !chart.chartId || chartIds.has(chart.chartId) || !FLAGS.has(chart.flag) || flags.has(chart.flag)) fail("chart-identity");
       const tier = ({ 1: "MIN", 2: "EVO", 4: "ULT", 8: "FBD" })[chart.flag];
-      if (chart.tier !== tier || !Number.isSafeInteger(chart.rating) || chart.rating < 0 || typeof chart.levelLabel !== "string" || chart.levelLabel.length > 16 || /[\u0000-\u001f\u007f-\u009f]/u.test(chart.levelLabel) || typeof chart.available !== "boolean") fail("chart-data");
+      if (chart.tier !== tier || !Number.isSafeInteger(chart.rating) || chart.rating < 0 || typeof chart.levelLabel !== "string" || chart.levelLabel.length > 16 || /[\u0000-\u001f\u007f-\u009f]/u.test(chart.levelLabel) || typeof chart.available !== "boolean" || (chart.designer !== undefined && !nullableText(chart.designer))) fail("chart-data");
       if (chart.available) available++;
       chartIds.add(chart.chartId);
       flags.add(chart.flag);
@@ -55,9 +63,9 @@ export function validateCatalog(doc) {
     songs.set(song.songId, song);
     basenames.add(song.basename);
   }
-  if (chartIds.size !== 303) fail("chart-count");
-  if (available !== 300) fail("available-count");
-  if (packedSongs !== 75) fail("packed-song-count");
+  if (chartIds.size !== 303 + extra) fail("chart-count");
+  if (available !== 300 + extra) fail("available-count");
+  if (packedSongs !== 75 + extra/4) fail("packed-song-count");
   if (doc.spcSchema !== undefined) {
     if (doc.spcSchema !== "infalsus-spc-aggregate-v1" || !obj(doc.spcSource) || doc.spcSource.chartCount !== 303 || doc.spcSource.availableCount !== 300 || doc.spcSource.decoderSha256 !== "182f3bec94078b9b50982f126468f845f71a97d711970c67cbbe856c4a0a0f9b" || doc.spcSource.checkpointSha256 !== "59e034acebbb12b293a39a6ebc6c2d7f92ed530963c48b50d8830194446c2b36" || !obj(doc.spcSource.mappingSha256) || !obj(doc.spcSource.nativeSha256) || Object.keys(doc.spcSource.mappingSha256).sort().join(",")!=="a6bc5e6da2a8628fdf4641890acf6c5e.bundle,fdf16516ca412329f8ce3e458b87a389.bundle" || Object.keys(doc.spcSource.nativeSha256).sort().join(",")!=="GameAssembly.dll,infalsus_Data/il2cpp_data/Metadata/global-metadata.dat" || doc.spcSource.mappingSha256["fdf16516ca412329f8ce3e458b87a389.bundle"]!=="58cc0cb66c88bba6d22ccec94f417b71ba5d2d1b3538c029919e158d019d42d0" || doc.spcSource.mappingSha256["a6bc5e6da2a8628fdf4641890acf6c5e.bundle"]!=="8ab911e0d9149a550fa67f5948ce767eb928c4d55afef583c3a5da2d0760e24f" || doc.spcSource.nativeSha256["GameAssembly.dll"]!=="0d4d339b050188cbd53922ee0204105ca71305abfb73bcfdb994affe1b33e70c" || doc.spcSource.nativeSha256["infalsus_Data/il2cpp_data/Metadata/global-metadata.dat"]!=="b3fccad7cb85f61e1e01cac8ff22e9878a0276b7349c42881caeb567c767ef83" || Object.values(doc.spcSource.mappingSha256).some(v=>!hex(v)) || Object.values(doc.spcSource.nativeSha256).some(v=>!hex(v))) fail("spc-source");
     let seen=0;
@@ -76,7 +84,7 @@ export function validateCatalog(doc) {
       if(x.time.status!=="verified"||x.time.unit!=="ms"||x.time.meaning!=="note-extent"||!(x.time.startMs===null||Number.isSafeInteger(x.time.startMs))||!(x.time.endMs===null||Number.isSafeInteger(x.time.endMs))||!(x.time.spanMs===null||Number.isSafeInteger(x.time.spanMs))||(x.noteCount===0?(x.time.startMs!==null||x.time.endMs!==null||x.time.spanMs!==null):(x.time.startMs===null||x.time.endMs<x.time.startMs||x.time.spanMs!==x.time.endMs-x.time.startMs)))fail("spc-time");
       if(!["partial","verified"].includes(x.tracks.status)||!Array.isArray(x.tracks.items)||!int(x.tracks.unknownPositionCount)||x.tracks.unknownPositionCount>x.noteCount||(x.noteCount===0&&x.tracks.items.length!==0)||x.tracks.items.some((n,i)=>!Number.isInteger(n)||n<0||n>5||(i&&n<=x.tracks.items[i-1]))||(x.tracks.status==="verified"&&x.tracks.unknownPositionCount!==0)||(x.tracks.status==="partial"&&x.tracks.unknownPositionCount===0))fail("spc-tracks");
     }
-    if(seen!==303)fail("spc-chart-count");
+    if(seen!==303+extra)fail("spc-chart-count");
   }
   return doc;
 }

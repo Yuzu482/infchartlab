@@ -12,6 +12,9 @@ from the MIT license:
 - `dist/catalog.json`: factual game catalog and parsed chart aggregates; no
   license to underlying original charts or artistic content is granted.
 
+CHUNITHM collaboration artwork and other SEGA-derived content remain subject to
+SEGA and the respective rights holders' rights; they are not covered by MIT.
+
 These materials remain subject to their respective rights holders' terms.
 Their inclusion is not a claim of permission from lowiro or other rights holders.
 Obtain the relevant permission before reusing or redistributing these materials.

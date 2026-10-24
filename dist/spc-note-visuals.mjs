@@ -1,12 +1,13 @@
 // Internal note-only Canvas renderer. Browser globals are used only by callers.
 export const NOTE_ASSETS = Object.freeze({
-  tapFloor: 'note-floor-tap.png', tapLeft: 'note-side-left-tap.png', tapRight: 'note-side-right-tap.png',
+  tapSpan: 'note-floor-span.png', tapFloor: 'note-floor-tap.png', tapLeft: 'note-side-left-tap.png', tapRight: 'note-side-right-tap.png',
   holdLeft: 'note-side-left-hold.png', holdRight: 'note-side-right-hold.png', flickLeft: 'note-flick-left.png',
   flickRight: 'note-flick-right.png', holdFloor: 'note-floor-hold.png', catchArch: 'note-catch-arch.png',
   catchDots: 'note-catch-dots.png'
 });
 
 const SPECS = {
+  span: { asset: 'tapSpan', mesh: 546, projection: 'xy' },
   tap: { asset: 'tapFloor', mesh: 546, projection: 'xy' },
   long: { asset: 'holdFloor', mesh: 589, projection: 'xz', headMesh: 587, tailMesh: 588 },
   sideTapLeft: { asset: 'tapLeft', mesh: 546, projection: 'xy' },
@@ -23,7 +24,7 @@ export function mapNoteVisual(type, side = 'center', direction = 'left') {
     asset: direction === 'right' ? 'flickRight' : 'flickLeft', mesh: 584, projection: 'xy',
     nativeColor: direction === 'right' ? '#24d957' : '#ffe500'
   };
-  const key = type === 'long'
+  const key = type === 'span' && side === 'center' ? 'span' : type === 'long'
     ? (side === 'left' ? 'sideLongLeft' : side === 'right' ? 'sideLongRight' : 'long')
     : (side === 'left' ? 'sideTapLeft' : side === 'right' ? 'sideTapRight' : 'tap');
   return { ...SPECS[key], nativeColor: side === 'left' ? '#a474ff' : side === 'right' ? '#ff9bd8' : '#8ee7f2' };

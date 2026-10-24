@@ -12,9 +12,9 @@ const byId = (model, id) => model.songs.find((s) => s.song.songId === id);
 
 test("validates pinned catalog facts and actual chart counts", () => {
   assert.equal(validateCatalog(catalog), catalog);
-  assert.equal(catalog.songs.length, 78);
-  assert.equal(catalog.packs.length, 7);
-  assert.equal(catalog.songs.flatMap((s) => s.charts).filter((c) => c.available).length, 300);
+  assert.equal(catalog.songs.length, 83);
+  assert.equal(catalog.packs.length, 8);
+  assert.equal(catalog.songs.flatMap((s) => s.charts).filter((c) => c.available).length, 320);
 });
 test("known alamode ratings and flags are preserved", () => {
   const s = catalog.songs.find((x) => x.songId === 2);
@@ -40,10 +40,10 @@ test("DLC pack contains the five verified IDs", () => {
 });
 test("unplayed songs remain in the model and saved-only filtering defaults on", () => {
   const model = empty();
-  assert.equal(model.songs.length, 78);
-  assert.equal(model.songs.filter((s) => !s.hasSaved).length, 78);
+  assert.equal(model.songs.length, 83);
+  assert.equal(model.songs.filter((s) => !s.hasSaved).length, 83);
   assert.deepEqual(filterSongs(model), []);
-  assert.equal(filterSongs(model, { savedOnly: false }).length, 78);
+  assert.equal(filterSongs(model, { savedOnly: false }).length, 83);
 });
 test("matching requires known ID and exact non-null basename", () => {
   const model = empty([record(2, "alamode")]);
@@ -110,8 +110,10 @@ test("SPC aggregate validator rejects malformed metrics, paths and provenance", 
   for(const mutate of [c=>{c.spc.kindCounts['1']+=1},c=>{c.spc.time.endMs++},c=>{c.spc.bpm.changes.reverse()},c=>{c.spc.tracks.unknownPositionCount=c.spc.noteCount+1}]){
     const doc=copy(),chart=doc.songs.flatMap(s=>s.charts).find(c=>c.chartId===first.chartId);mutate(chart);assert.throws(()=>validateCatalog(doc),/INVALID_CATALOG:/u);
   }
-  const failure=copy().songs.flatMap(s=>s.charts).find(c=>c.spc.status==='error');
-  const badFailure=copy(),failed=badFailure.songs.flatMap(s=>s.charts).find(c=>c.chartId===failure.chartId);failed.spc.noteCount=0;assert.throws(()=>validateCatalog(badFailure),/INVALID_CATALOG:spc-failure-shape/u);
+  const badFailure=copy(),failed=badFailure.songs.flatMap(s=>s.charts).find(c=>c.chartId===first.chartId);
+  failed.spc={status:'error',errorCode:'chart-reference-missing',lookupPath:null,fileSha256:null,bpm:null,noteCount:null,kindCounts:null,time:null,tracks:null};
+  assert.equal(validateCatalog(badFailure),badFailure);
+  failed.spc.noteCount=0;assert.throws(()=>validateCatalog(badFailure),/INVALID_CATALOG:spc-failure-shape/u);
   const badPath=copy(),pathChart=badPath.songs.flatMap(s=>s.charts).find(c=>c.chartId===first.chartId);pathChart.spc.lookupPath='..\\outside.spc';assert.throws(()=>validateCatalog(badPath),/INVALID_CATALOG:spc-success-shape/u);
   for(const change of [d=>{d.spcSource.availableCount++},d=>{d.spcSource.decoderSha256='0'.repeat(64)}]){const doc=copy();change(doc);assert.throws(()=>validateCatalog(doc),/INVALID_CATALOG:spc-source/u)}
 });

@@ -149,3 +149,15 @@ test('asset loader rejects failures and disposal drains pending images and cache
   assert.equal(late.cache.size, 0);
   assert.ok(pending.every(image => image.onload === null && image.onerror === null));
 });
+
+test('wide floor taps use native span texture and mesh without changing normal taps or holds',()=>{
+ assert.equal(mapNoteVisual('span').asset,'tapSpan');
+ assert.equal(mapNoteVisual('span').mesh,546);
+ assert.equal(mapNoteVisual('tap').asset,'tapFloor');
+ assert.equal(mapNoteVisual('long').asset,'holdFloor');
+ assert.equal(mapNoteVisual('span','left').asset,'tapLeft');
+ const ctx=context(),spanImage={naturalWidth:2048,naturalHeight:2048},tapImage={naturalWidth:2048,naturalHeight:2048};
+ const result=drawNote({ctx,rect:{x:0,y:0,width:160,height:8},type:'span',assets:new Map([[NOTE_ASSETS.tapSpan,spanImage],[NOTE_ASSETS.tapFloor,tapImage]]),meshes:{546:mesh}});
+ assert.equal(result.visual.asset,'tapSpan');
+ const images=ctx.calls.filter(c=>c[0]==='image');assert.ok(images.length);assert.ok(images.every(c=>c[1]===spanImage));
+});
